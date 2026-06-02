@@ -8,10 +8,10 @@ export default class BootScene extends Phaser.Scene {
     this.makeBenchTexture();
     this.makeBridgeTexture();
     this.makeDuckTexture();
-    this.drawMoo('moo',       'open',  false);
-    this.drawMoo('moo_blink', 'blink', false);
-    this.drawMoo('moo_eat',   'open',  true);
-    this.drawMoo('moo_dead',  'dead',  false);
+    this._makeCowCanvas('moo',       'open',  false);
+    this._makeCowCanvas('moo_blink', 'blink', false);
+    this._makeCowCanvas('moo_eat',   'open',  true);
+    this._makeCowCanvas('moo_dead',  'dead',  false);
     this.makeReedTexture();
     this.makeShimmerTexture();
     this.makeTempleTexture();
@@ -352,121 +352,198 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // key: texture name | blink: eyes closed | eating: head lowered + grass
-  // eyeState: 'open' | 'blink' | 'dead'
-  drawMoo(key, eyeState, eating) {
-    const g  = this.make.graphics({ add: false });
-    const W  = 50, H = 32;
-    const hs = eating ? 3 : 0; // head shifts down when grazing
+  // ── Cute cow using HTML5 Canvas 2D API (smooth curves, gradients, eyelashes)
+  // Phaser's Graphics API only has rects/circles with no anti-aliasing.
+  // Canvas 2D gives us bezier curves, radial gradients, and smooth arcs —
+  // everything needed to draw something that actually looks cute.
+  _makeCowCanvas(key, eyeState, eating) {
+    const W = 64, H = 64;
+    const el = document.createElement('canvas');
+    el.width = W; el.height = H;
+    const c = el.getContext('2d');
+    this._drawCow(c, eyeState, eating);
+    if (this.textures.exists(key)) this.textures.remove(key);
+    this.textures.addCanvas(key, el);
+  }
 
-    // ── TAIL ────────────────────────────────────────────────────────────────
-    g.fillStyle(0xcdc0a0);
-    g.fillRect(1, 12, 4, 3);
-    g.fillStyle(0x6d4c41);
-    g.fillCircle(2, 10, 3);
+  _drawCow(c, eyeState, eating) {
+    const cx = 32; // horizontal centre
 
-    // ── BODY (wide, blocky Holstein shape) ──────────────────────────────────
-    g.fillStyle(0xfffde7);
-    g.fillEllipse(19, 18, 34, 14);
+    // ── BODY ──────────────────────────────────────────────────────────────
+    // Soft shadow beneath body
+    c.fillStyle = 'rgba(0,0,0,0.08)';
+    c.beginPath(); c.ellipse(cx + 2, 52, 20, 11, 0, 0, Math.PI * 2); c.fill();
 
-    // ── SPOTS (large, clearly Holstein) ─────────────────────────────────────
-    g.fillStyle(0x212121);
-    g.fillEllipse(11, 14, 13, 9);
-    g.fillEllipse(23, 20, 9, 7);
-    g.fillEllipse(16, 23, 11, 5);
+    // Body with radial gradient (gives depth)
+    const bodyG = c.createRadialGradient(cx - 4, 44, 3, cx, 50, 20);
+    bodyG.addColorStop(0, '#fffde7');
+    bodyG.addColorStop(1, '#ede0c8');
+    c.fillStyle = bodyG;
+    c.beginPath(); c.ellipse(cx, 50, 19, 11, 0, 0, Math.PI * 2); c.fill();
 
-    // ── BACK LEGS ────────────────────────────────────────────────────────────
-    g.fillStyle(0xfffde7);
-    g.fillRect(6,  21, 5, 9);
-    g.fillRect(13, 21, 5, 9);
-    g.fillStyle(0x4e342e);
-    g.fillRect(6,  27, 5, 3);
-    g.fillRect(13, 27, 5, 3);
+    // Body outline
+    c.strokeStyle = '#d4c4a0'; c.lineWidth = 1;
+    c.beginPath(); c.ellipse(cx, 50, 19, 11, 0, 0, Math.PI * 2); c.stroke();
 
-    // ── FRONT LEGS ───────────────────────────────────────────────────────────
-    g.fillStyle(0xfffde7);
-    g.fillRect(27, 21, 5, 9);
-    g.fillRect(33, 21, 5, 9);
-    g.fillStyle(0x4e342e);
-    g.fillRect(27, 27, 5, 3);
-    g.fillRect(33, 27, 5, 3);
+    // ── HOLSTEIN SPOTS ────────────────────────────────────────────────────
+    c.fillStyle = '#1a1a1a';
+    c.save(); c.translate(22, 47); c.rotate(-0.4);
+    c.beginPath(); c.ellipse(0, 0, 8, 6, 0, 0, Math.PI * 2); c.fill();
+    c.restore();
+    c.save(); c.translate(42, 53); c.rotate(0.3);
+    c.beginPath(); c.ellipse(0, 0, 6, 4, 0, 0, Math.PI * 2); c.fill();
+    c.restore();
 
-    // ── NECK (short, wide) ───────────────────────────────────────────────────
-    g.fillStyle(0xfffde7);
-    g.fillRect(33, 12 + hs, 6, 11);
+    // ── LEGS (4 stubby rounded legs) ──────────────────────────────────────
+    [13, 21, 37, 45].forEach(lx => {
+      // Leg
+      c.fillStyle = '#ede0c8';
+      c.fillRect(lx, 57, 6, 8);
+      // Hoof (dark rounded)
+      c.fillStyle = '#5d4037';
+      c.beginPath();
+      c.arc(lx + 3, 65, 3.5, Math.PI, 2 * Math.PI);
+      c.rect(lx, 62, 6, 3); c.fill();
+    });
 
-    // ── HEAD: rectangular (wider than tall) — this is the key cow shape ──────
-    // A rabbit head is round/oval; a cow head is wide and blocky.
-    g.fillStyle(0xfffde7);
-    g.fillRect(33, 8 + hs, 13, 13);     // main head block
-    g.fillCircle(33, 8  + hs, 4);       // rounded back-top corner
-    g.fillCircle(33, 20 + hs, 4);       // rounded back-bottom corner
+    // ── COWBELL ───────────────────────────────────────────────────────────
+    c.fillStyle = '#ffd54f';
+    c.beginPath(); c.roundRect(29, 40, 6, 8, 2); c.fill();
+    c.fillStyle = '#ffb300';
+    c.beginPath(); c.arc(32, 47, 2, 0, Math.PI * 2); c.fill();
+    // Rope
+    c.strokeStyle = '#8d6e63'; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(32, 38); c.lineTo(32, 40); c.stroke();
 
-    // ── EAR: wide flat oval sticking out to the SIDE (NOT tall = NOT rabbit) ─
-    // Width (14) >> Height (8) — the key visual fix that makes it look like a cow
-    g.fillStyle(0xfffde7);
-    g.fillEllipse(36, 5 + hs, 14, 8);   // outer ear — wide, flat
-    g.fillStyle(0xf4988a);
-    g.fillEllipse(36, 6 + hs, 9,  5);   // pink inner
+    // ── EARS (wide ovals — cow ears are NOT tall like rabbit ears) ─────────
+    // Left ear
+    c.fillStyle = '#ede0c8';
+    c.beginPath(); c.ellipse(11, 15, 10, 7, -0.4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#f4988a';
+    c.beginPath(); c.ellipse(11, 16, 6.5, 4.5, -0.4, 0, Math.PI * 2); c.fill();
+    // Right ear
+    c.fillStyle = '#ede0c8';
+    c.beginPath(); c.ellipse(53, 15, 10, 7, 0.4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#f4988a';
+    c.beginPath(); c.ellipse(53, 16, 6.5, 4.5, 0.4, 0, Math.PI * 2); c.fill();
 
-    // ── HORNS: two small stubs on top of forehead ────────────────────────────
-    g.fillStyle(0xffc107);
-    g.fillRect(38, 2 + hs, 3, 5);
-    g.fillRect(42, 2 + hs, 3, 5);
+    // ── HEAD ──────────────────────────────────────────────────────────────
+    // Soft shadow
+    c.fillStyle = 'rgba(0,0,0,0.07)';
+    c.beginPath(); c.arc(cx + 1, 23, 18, 0, Math.PI * 2); c.fill();
 
-    // ── EYE ──────────────────────────────────────────────────────────────────
-    if (eyeState === 'blink') {
-      g.fillStyle(0x5d4037);
-      g.fillRect(37, 13 + hs, 7, 2);    // closed lid
+    // Head with gradient (lighter on top-left = soft lighting)
+    const headG = c.createRadialGradient(cx - 5, 16, 3, cx, 22, 18);
+    headG.addColorStop(0, '#fffde7');
+    headG.addColorStop(1, '#ede0c8');
+    c.fillStyle = headG;
+    c.beginPath(); c.arc(cx, 22, 17, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#d4c4a0'; c.lineWidth = 1;
+    c.beginPath(); c.arc(cx, 22, 17, 0, Math.PI * 2); c.stroke();
 
-    } else if (eyeState === 'dead') {
-      // Pixel-art X eyes
-      g.fillStyle(0x4e342e);
-      g.fillRect(37, 11 + hs, 2, 2); g.fillRect(42, 11 + hs, 2, 2);
-      g.fillRect(39, 13 + hs, 2, 2);
-      g.fillRect(37, 15 + hs, 2, 2); g.fillRect(42, 15 + hs, 2, 2);
+    // ── HORNS (bezier-curved — small & cute) ──────────────────────────────
+    c.fillStyle = '#ffc107';
+    // Left horn
+    c.beginPath();
+    c.moveTo(21, 9); c.quadraticCurveTo(14, 1, 23, 5);
+    c.quadraticCurveTo(27, 9, 21, 9); c.fill();
+    // Right horn
+    c.beginPath();
+    c.moveTo(43, 9); c.quadraticCurveTo(50, 1, 41, 5);
+    c.quadraticCurveTo(37, 9, 43, 9); c.fill();
+
+    // ── EYES ──────────────────────────────────────────────────────────────
+    if (eyeState === 'dead') {
+      c.strokeStyle = '#4e342e'; c.lineWidth = 2.5; c.lineCap = 'round';
+      [21, 43].forEach(ex => {
+        c.beginPath(); c.moveTo(ex - 4, 17); c.lineTo(ex + 4, 25); c.stroke();
+        c.beginPath(); c.moveTo(ex + 4, 17); c.lineTo(ex - 4, 25); c.stroke();
+      });
+
+    } else if (eyeState === 'blink') {
+      // Cute closed crescents
+      c.strokeStyle = '#4e342e'; c.lineWidth = 2.5; c.lineCap = 'round';
+      [21, 43].forEach(ex => {
+        c.beginPath();
+        c.arc(ex, 22, 5.5, Math.PI + 0.25, 2 * Math.PI - 0.25);
+        c.stroke();
+      });
 
     } else {
-      // Normal large expressive eye
-      g.fillStyle(0x3e2723);
-      g.fillCircle(41, 13 + hs, 4);
-      g.fillStyle(0xffffff);
-      g.fillCircle(40, 12 + hs, 2);
-      g.fillStyle(0x212121);
-      g.fillCircle(40, 13 + hs, 1);
-      g.fillStyle(0xffffff);
-      g.fillRect(39, 11 + hs, 1, 1);
+      // Open eyes — gradient iris, highlights, eyelashes
+      [21, 43].forEach(ex => {
+        // Sclera
+        c.fillStyle = 'white';
+        c.beginPath(); c.arc(ex, 21, 6.5, 0, Math.PI * 2); c.fill();
+        // Iris with gradient
+        const irisG = c.createRadialGradient(ex - 1, 20, 1, ex, 21, 5.5);
+        irisG.addColorStop(0, '#795548');
+        irisG.addColorStop(1, '#3e2723');
+        c.fillStyle = irisG;
+        c.beginPath(); c.arc(ex, 21, 5, 0, Math.PI * 2); c.fill();
+        // Pupil
+        c.fillStyle = '#111';
+        c.beginPath(); c.arc(ex - 0.5, 21.5, 2.8, 0, Math.PI * 2); c.fill();
+        // Main highlight
+        c.fillStyle = 'white';
+        c.beginPath(); c.arc(ex - 2, 18.5, 1.8, 0, Math.PI * 2); c.fill();
+        // Small second highlight
+        c.beginPath(); c.arc(ex + 1.5, 20, 0.9, 0, Math.PI * 2); c.fill();
+        // Eyelashes (small strokes above each eye)
+        c.strokeStyle = '#4e342e'; c.lineWidth = 1.2; c.lineCap = 'round';
+        [-4, -2, 0, 2, 4].forEach(dx => {
+          c.beginPath();
+          c.moveTo(ex + dx, 15.5);
+          c.lineTo(ex + dx - 0.8, 13);
+          c.stroke();
+        });
+      });
     }
 
-    // ── MUZZLE: the defining cow feature — wide pinkish square protrusion ─────
-    // This clearly differentiates from rabbit (which has a small pointed nose).
-    g.fillStyle(0xf5c0a8);
-    g.fillRect(44, 12 + hs, 6, 9);      // rectangular muzzle block
-    g.fillCircle(47, 20 + hs, 3);       // rounded chin
-
-    // Nostrils — two clear dark holes on the muzzle
-    g.fillStyle(0xa0522d);
-    g.fillCircle(45, 15 + hs, 1);
-    g.fillCircle(48, 15 + hs, 1);
-
-    // Mouth line
-    g.fillStyle(0x9e5030);
-    g.fillRect(44, 19 + hs, 6, 1);
-
-    // ── GRASS IN MOUTH (eating variant) ──────────────────────────────────────
-    if (eating) {
-      g.fillStyle(0x558b2f);
-      g.fillRect(44, 18 + hs, 6, 2);
-      g.fillRect(43, 20 + hs, 7, 2);
+    // ── BLUSH CIRCLES ─────────────────────────────────────────────────────
+    if (eyeState !== 'dead') {
+      c.fillStyle = 'rgba(255,120,100,0.28)';
+      c.beginPath(); c.ellipse(14, 29, 6.5, 4, 0, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.ellipse(50, 29, 6.5, 4, 0, 0, Math.PI * 2); c.fill();
     }
 
-    // ── COWBELL ──────────────────────────────────────────────────────────────
-    g.fillStyle(0xffd54f);
-    g.fillRect(35, 22, 4, 5);
-    g.fillStyle(0xffb300);
-    g.fillRect(36, 24, 2, 2);
+    // ── MUZZLE (big, soft, clearly cow) ───────────────────────────────────
+    // Muzzle shadow
+    c.fillStyle = 'rgba(0,0,0,0.07)';
+    c.beginPath(); c.ellipse(cx + 1, 34, 12, 8.5, 0, 0, Math.PI * 2); c.fill();
+    // Muzzle with gradient
+    const muzzG = c.createRadialGradient(cx - 3, 29, 2, cx, 33, 11);
+    muzzG.addColorStop(0, '#ffd5b8');
+    muzzG.addColorStop(1, '#f5a88a');
+    c.fillStyle = muzzG;
+    c.beginPath(); c.ellipse(cx, 33, 11, 8, 0, 0, Math.PI * 2); c.fill();
+    // Muzzle highlight
+    c.fillStyle = 'rgba(255,255,255,0.35)';
+    c.beginPath(); c.ellipse(cx - 3, 29, 5, 3, -0.3, 0, Math.PI * 2); c.fill();
+    // Nostrils
+    c.fillStyle = '#c07050';
+    c.beginPath(); c.ellipse(cx - 4, 34, 2.8, 2, 0.15, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.ellipse(cx + 4, 34, 2.8, 2, -0.15, 0, Math.PI * 2); c.fill();
 
-    g.generateTexture(key, W, H);
-    g.destroy();
+    // ── MOUTH / EXPRESSION ────────────────────────────────────────────────
+    c.strokeStyle = '#c07050'; c.lineWidth = 1.5; c.lineCap = 'round';
+    if (eyeState === 'dead') {
+      // Sad frown
+      c.beginPath(); c.arc(cx, 42, 5, 0.15, Math.PI - 0.15, true); c.stroke();
+    } else if (eating) {
+      // Open mouth
+      c.beginPath(); c.arc(cx, 39, 5, 0.1, Math.PI - 0.1); c.stroke();
+      // Grass hanging from mouth
+      c.fillStyle = '#4caf50';
+      c.fillRect(cx - 2, 42, 16, 3);
+      c.fillRect(cx, 45, 12, 3);
+      c.fillStyle = '#66bb6a';
+      c.fillRect(cx, 43, 5, 2);
+      c.fillRect(cx + 7, 43, 5, 2);
+    } else {
+      // Happy smile
+      c.beginPath(); c.arc(cx, 39, 5, 0.1, Math.PI - 0.1); c.stroke();
+    }
   }
 
   create() {

@@ -6,9 +6,9 @@ export default class Moo {
     this.isDead   = false;
     this.isSleeping = false;
 
-    // Sprite (larger scale to fit new 50×32 texture)
+    // 64×64 Canvas 2D texture — scale 1.4 → 89×89 px on screen
     this.sprite = scene.add.sprite(x, y, 'moo')
-      .setScale(2.0)
+      .setScale(1.4)
       .setDepth(y);
 
     // Blink animation
@@ -253,7 +253,7 @@ export default class Moo {
       this.scene.tweens.add({
         targets: this.sprite, scaleY: 1.6, scaleX: 2.4,
         duration: 140, yoyo: true, repeat: 3, ease: 'Cubic.Out',
-        onComplete: () => this.sprite.setScale(2.0),
+        onComplete: () => this.sprite.setScale(1.4),
       });
     }
 
