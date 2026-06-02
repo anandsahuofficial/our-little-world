@@ -8,9 +8,10 @@ export default class BootScene extends Phaser.Scene {
     this.makeBenchTexture();
     this.makeBridgeTexture();
     this.makeDuckTexture();
-    this.drawMoo('moo',       false, false);
-    this.drawMoo('moo_blink', true,  false);
-    this.drawMoo('moo_eat',   false, true);
+    this.drawMoo('moo',       'open',  false);
+    this.drawMoo('moo_blink', 'blink', false);
+    this.drawMoo('moo_eat',   'open',  true);
+    this.drawMoo('moo_dead',  'dead',  false);
     this.makeReedTexture();
     this.makeShimmerTexture();
     this.makeTempleTexture();
@@ -351,97 +352,120 @@ export default class BootScene extends Phaser.Scene {
   }
 
   // key: texture name | blink: eyes closed | eating: head lowered + grass
-  drawMoo(key, blink, eating) {
-    const g = this.make.graphics({ add: false });
-    const headY = eating ? 16 : 13; // shift head down when grazing
+  // eyeState: 'open' | 'blink' | 'dead'
+  drawMoo(key, eyeState, eating) {
+    const g  = this.make.graphics({ add: false });
+    const W  = 50, H = 32;
+    const hs = eating ? 3 : 0; // head shifts down when grazing
 
-    // Tail tuft
-    g.fillStyle(0xcfbea0);
-    g.fillRect(0, 10, 4, 3);
-    g.fillStyle(0x8d7760);
-    g.fillCircle(2, 8, 3);
+    // ── TAIL ────────────────────────────────────────────────────────────────
+    g.fillStyle(0xcdc0a0);
+    g.fillRect(1, 12, 4, 3);
+    g.fillStyle(0x6d4c41);
+    g.fillCircle(2, 10, 3);
 
-    // Body
+    // ── BODY (wide, blocky Holstein shape) ──────────────────────────────────
     g.fillStyle(0xfffde7);
-    g.fillEllipse(18, 17, 28, 12);
+    g.fillEllipse(19, 18, 34, 14);
 
-    // Black spots
+    // ── SPOTS (large, clearly Holstein) ─────────────────────────────────────
     g.fillStyle(0x212121);
-    g.fillEllipse(11, 15, 8, 6);
-    g.fillEllipse(20, 18, 6, 5);
-    g.fillEllipse(15, 20, 7, 4);
+    g.fillEllipse(11, 14, 13, 9);
+    g.fillEllipse(23, 20, 9, 7);
+    g.fillEllipse(16, 23, 11, 5);
 
-    // Back legs
+    // ── BACK LEGS ────────────────────────────────────────────────────────────
     g.fillStyle(0xfffde7);
-    g.fillRect(6, 20, 4, 7);
-    g.fillRect(13, 20, 4, 7);
-    g.fillStyle(0x5d4037);
-    g.fillRect(6, 24, 4, 3);
-    g.fillRect(13, 24, 4, 3);
+    g.fillRect(6,  21, 5, 9);
+    g.fillRect(13, 21, 5, 9);
+    g.fillStyle(0x4e342e);
+    g.fillRect(6,  27, 5, 3);
+    g.fillRect(13, 27, 5, 3);
 
-    // Front legs
+    // ── FRONT LEGS ───────────────────────────────────────────────────────────
     g.fillStyle(0xfffde7);
-    g.fillRect(23, 20, 4, 7);
-    g.fillRect(30, 20, 4, 7);
-    g.fillStyle(0x5d4037);
-    g.fillRect(23, 24, 4, 3);
-    g.fillRect(30, 24, 4, 3);
+    g.fillRect(27, 21, 5, 9);
+    g.fillRect(33, 21, 5, 9);
+    g.fillStyle(0x4e342e);
+    g.fillRect(27, 27, 5, 3);
+    g.fillRect(33, 27, 5, 3);
 
-    // Neck
+    // ── NECK (short, wide) ───────────────────────────────────────────────────
     g.fillStyle(0xfffde7);
-    g.fillRect(29, 11, 5, 9);
+    g.fillRect(33, 12 + hs, 6, 11);
 
-    // Head
+    // ── HEAD: rectangular (wider than tall) — this is the key cow shape ──────
+    // A rabbit head is round/oval; a cow head is wide and blocky.
     g.fillStyle(0xfffde7);
-    g.fillEllipse(37, headY, 12, 14);
+    g.fillRect(33, 8 + hs, 13, 13);     // main head block
+    g.fillCircle(33, 8  + hs, 4);       // rounded back-top corner
+    g.fillCircle(33, 20 + hs, 4);       // rounded back-bottom corner
 
-    // Ear
+    // ── EAR: wide flat oval sticking out to the SIDE (NOT tall = NOT rabbit) ─
+    // Width (14) >> Height (8) — the key visual fix that makes it look like a cow
     g.fillStyle(0xfffde7);
-    g.fillEllipse(33, headY - 8, 7, 6);
-    g.fillStyle(0xffccbc);
-    g.fillEllipse(33, headY - 7, 5, 4);
+    g.fillEllipse(36, 5 + hs, 14, 8);   // outer ear — wide, flat
+    g.fillStyle(0xf4988a);
+    g.fillEllipse(36, 6 + hs, 9,  5);   // pink inner
 
-    // Horn (tiny)
-    g.fillStyle(0xfff59d);
-    g.fillRect(32, headY - 13, 2, 5);
-    g.fillRect(34, headY - 14, 2, 4);
+    // ── HORNS: two small stubs on top of forehead ────────────────────────────
+    g.fillStyle(0xffc107);
+    g.fillRect(38, 2 + hs, 3, 5);
+    g.fillRect(42, 2 + hs, 3, 5);
 
-    // Eye
-    if (blink) {
+    // ── EYE ──────────────────────────────────────────────────────────────────
+    if (eyeState === 'blink') {
       g.fillStyle(0x5d4037);
-      g.fillRect(34, headY - 2, 5, 2);
-    } else {
+      g.fillRect(37, 13 + hs, 7, 2);    // closed lid
+
+    } else if (eyeState === 'dead') {
+      // Pixel-art X eyes
       g.fillStyle(0x4e342e);
-      g.fillEllipse(36, headY - 1, 5, 6);
+      g.fillRect(37, 11 + hs, 2, 2); g.fillRect(42, 11 + hs, 2, 2);
+      g.fillRect(39, 13 + hs, 2, 2);
+      g.fillRect(37, 15 + hs, 2, 2); g.fillRect(42, 15 + hs, 2, 2);
+
+    } else {
+      // Normal large expressive eye
+      g.fillStyle(0x3e2723);
+      g.fillCircle(41, 13 + hs, 4);
       g.fillStyle(0xffffff);
-      g.fillEllipse(35, headY - 2, 3, 4);
+      g.fillCircle(40, 12 + hs, 2);
       g.fillStyle(0x212121);
-      g.fillEllipse(35, headY - 1, 2, 3);
+      g.fillCircle(40, 13 + hs, 1);
       g.fillStyle(0xffffff);
-      g.fillRect(34, headY - 3, 1, 1);
+      g.fillRect(39, 11 + hs, 1, 1);
     }
 
-    // Nose
-    g.fillStyle(0xf8bbd0);
-    g.fillEllipse(41, headY + 4, 5, 3);
-    g.fillStyle(0xf06292);
-    g.fillRect(40, headY + 3, 1, 1);
-    g.fillRect(42, headY + 3, 1, 1);
+    // ── MUZZLE: the defining cow feature — wide pinkish square protrusion ─────
+    // This clearly differentiates from rabbit (which has a small pointed nose).
+    g.fillStyle(0xf5c0a8);
+    g.fillRect(44, 12 + hs, 6, 9);      // rectangular muzzle block
+    g.fillCircle(47, 20 + hs, 3);       // rounded chin
 
-    // Bell
-    g.fillStyle(0xffd54f);
-    g.fillRect(30, 21, 3, 4);
-    g.fillStyle(0xffb300);
-    g.fillRect(31, 23, 2, 1);
+    // Nostrils — two clear dark holes on the muzzle
+    g.fillStyle(0xa0522d);
+    g.fillCircle(45, 15 + hs, 1);
+    g.fillCircle(48, 15 + hs, 1);
 
-    // Grass in mouth when eating
+    // Mouth line
+    g.fillStyle(0x9e5030);
+    g.fillRect(44, 19 + hs, 6, 1);
+
+    // ── GRASS IN MOUTH (eating variant) ──────────────────────────────────────
     if (eating) {
-      g.fillStyle(0x66bb6a);
-      g.fillRect(39, headY + 6, 5, 2);
-      g.fillRect(37, headY + 7, 7, 2);
+      g.fillStyle(0x558b2f);
+      g.fillRect(44, 18 + hs, 6, 2);
+      g.fillRect(43, 20 + hs, 7, 2);
     }
 
-    g.generateTexture(key, 44, 30);
+    // ── COWBELL ──────────────────────────────────────────────────────────────
+    g.fillStyle(0xffd54f);
+    g.fillRect(35, 22, 4, 5);
+    g.fillStyle(0xffb300);
+    g.fillRect(36, 24, 2, 2);
+
+    g.generateTexture(key, W, H);
     g.destroy();
   }
 

@@ -2,7 +2,7 @@ import Player from '../entities/Player.js';
 import Moo    from '../entities/Moo.js';
 import Duck   from '../entities/Duck.js';
 import SoundEngine from '../audio/SoundEngine.js';
-import { loadState, saveState, applyTimedDecay } from '../data/gameState.js';
+import { loadState, saveState, applyTimedDecay, msUntilDeath } from '../data/gameState.js';
 
 // Lake geometry constants (used for water / shore detection)
 const LAKE = { cx: 960, cy: 700, rx: 355, ry: 197 };

@@ -11,18 +11,16 @@ export default class UIScene extends Phaser.Scene {
   }
 
   createStatsPanel() {
-    const px = 10, py = 10, pw = 148, ph = 80;
+    const px = 10, py = 10, pw = 148, ph = 96;
 
-    // Background
+    // Background (taller to fit countdown row)
     const bg = this.add.graphics();
     bg.fillStyle(0x000000, 0.55);
     bg.fillRoundedRect(px, py, pw, ph, 8);
 
     this.add.text(px + pw / 2, py + 10, '~ Moo ~', {
-      fontSize: '11px',
-      color: '#ffd54f',
-      fontFamily: 'Georgia, serif',
-      fontStyle: 'italic',
+      fontSize: '11px', color: '#ffd54f',
+      fontFamily: 'Georgia, serif', fontStyle: 'italic',
     }).setOrigin(0.5, 0.5);
 
     const labelStyle = { fontSize: '8px', color: '#e0e0e0', fontFamily: 'Arial, sans-serif' };
@@ -32,22 +30,25 @@ export default class UIScene extends Phaser.Scene {
     this.add.text(px + 6, barYs[1], 'Happy',  labelStyle).setOrigin(0, 0.5);
     this.add.text(px + 6, barYs[2], 'Energy', labelStyle).setOrigin(0, 0.5);
 
-    // Bar backgrounds
     const barBg = this.add.graphics();
     barBg.fillStyle(0x333333, 0.9);
     barYs.forEach(by => barBg.fillRect(px + 52, by - 5, 90, 10));
 
-    // Dynamic bar fills — redrawn each update
     this.barFills = this.add.graphics();
     this.barX  = px + 52;
     this.barYs = barYs;
 
-    // Color config per stat
     this.barColors = [
-      { high: 0xff7043, mid: 0xffb74d, low: 0xef5350 },  // hunger  — orange theme
-      { high: 0xec407a, mid: 0xffb74d, low: 0xef5350 },  // happy   — pink theme
-      { high: 0x42a5f5, mid: 0xffb74d, low: 0xef5350 },  // energy  — blue theme
+      { high: 0xff7043, mid: 0xffb74d, low: 0xef5350 },
+      { high: 0xec407a, mid: 0xffb74d, low: 0xef5350 },
+      { high: 0x42a5f5, mid: 0xffb74d, low: 0xef5350 },
     ];
+
+    // ── Countdown to next required feeding ────────────────────────────────
+    this.countdownText = this.add.text(px + pw / 2, py + 82, '', {
+      fontSize: '8px', color: '#a5d6a7',
+      fontFamily: 'Arial, sans-serif',
+    }).setOrigin(0.5, 0.5);
   }
 
   createActionMenu() {
@@ -71,28 +72,26 @@ export default class UIScene extends Phaser.Scene {
     panel.fillRoundedRect(mx, my, mw, mh, 10);
     this.menuGroup.add(panel);
 
-    this.add.text(sw / 2, my + 16, 'Care for Moo:', {
-      fontSize: '13px',
-      color: '#ffd54f',
+    this.menuTitleObj = this.add.text(sw / 2, my + 16, 'Care for Moo:', {
+      fontSize: '13px', color: '#ffd54f',
       fontFamily: 'Georgia, serif',
     }).setOrigin(0.5);
+    this.menuGroup.add(this.menuTitleObj);
 
-    // Action buttons
-    const btnY  = my + 72;
-    const btns  = [
-      { label: 'Feed', action: 'feed', color: 0xe65100, x: sw / 2 - 94 },
-      { label: 'Pet',  action: 'pet',  color: 0xad1457, x: sw / 2      },
-      { label: 'Play', action: 'play', color: 0x1565c0, x: sw / 2 + 94 },
+    // Action buttons — keep named refs for dead-state adaptation
+    const btnY = my + 72;
+    const btnDefs = [
+      { label: 'Feed', action: 'feed', color: 0xe65100, x: sw / 2 - 94, ref: 'feed' },
+      { label: 'Pet',  action: 'pet',  color: 0xad1457, x: sw / 2,       ref: 'pet'  },
+      { label: 'Play', action: 'play', color: 0x1565c0, x: sw / 2 + 94,  ref: 'play' },
     ];
 
-    btns.forEach(b => {
+    btnDefs.forEach(b => {
       const rect = this.add.rectangle(b.x, btnY, 82, 34, b.color, 1)
         .setInteractive({ useHandCursor: true });
       const lbl = this.add.text(b.x, btnY, b.label, {
-        fontSize: '13px',
-        color: '#ffffff',
-        fontStyle: 'bold',
-        fontFamily: 'Arial, sans-serif',
+        fontSize: '13px', color: '#ffffff',
+        fontStyle: 'bold', fontFamily: 'Arial, sans-serif',
       }).setOrigin(0.5);
 
       rect.on('pointerover', () => rect.setAlpha(0.75));
@@ -103,6 +102,11 @@ export default class UIScene extends Phaser.Scene {
         this.game.events.emit('moo-action', { action: b.action });
         this.hideMenu();
       });
+
+      // Named refs used by showMenu() to adapt for dead state
+      if (b.ref === 'feed') { this.feedBtnObj = rect; this.feedLblObj = lbl; }
+      if (b.ref === 'pet')  { this.petBtnObj  = rect; this.petLblObj  = lbl; }
+      if (b.ref === 'play') { this.playBtnObj = rect; this.playLblObj = lbl; }
 
       this.menuGroup.add(rect);
       this.menuGroup.add(lbl);
@@ -154,15 +158,61 @@ export default class UIScene extends Phaser.Scene {
     const stats = this.registry.get('mooStats');
     if (!stats) return;
 
+    // ── Stat bars ─────────────────────────────────────────────────────────
     this.barFills.clear();
-
-    const vals = [stats.hunger, stats.happiness, stats.energy];
-    vals.forEach((v, i) => {
+    [stats.hunger, stats.happiness, stats.energy].forEach((v, i) => {
       const c = this.barColors[i];
       const color = v <= 30 ? c.low : v <= 60 ? c.mid : c.high;
       const w = Math.max(2, (v / 100) * 90);
       this.barFills.fillStyle(color, 1);
       this.barFills.fillRect(this.barX, this.barYs[i] - 5, w, 10);
+    });
+
+    // ── 4-hour countdown ──────────────────────────────────────────────────
+    if (this.countdownText) {
+      if (stats.dead) {
+        this.countdownText.setText('Moo needs food!').setColor('#ff5722');
+      } else if (stats.lastFed) {
+        const msLeft = Math.max(0, stats.lastFed + 4 * 3_600_000 - Date.now());
+        const h = Math.floor(msLeft / 3_600_000);
+        const m = Math.floor((msLeft % 3_600_000) / 60_000);
+        const label = msLeft === 0
+          ? 'Feed now!'
+          : `Feed within: ${h}h ${m}m`;
+        const color = msLeft < 3_600_000 ? '#ff5722'
+                    : msLeft < 7_200_000 ? '#ffb74d'
+                    : '#a5d6a7';
+        this.countdownText.setText(label).setColor(color);
+      }
+    }
+  }
+
+  showMenu() {
+    if (this.menuVisible) return;
+    const isDead = this.registry.get('mooStats')?.dead;
+
+    // Adapt UI text + button availability for dead/alive state
+    if (this.menuTitleObj) {
+      this.menuTitleObj.setText(isDead ? 'Moo is starving...' : 'Care for Moo:');
+      this.menuTitleObj.setColor(isDead ? '#ff7043' : '#ffd54f');
+    }
+    if (this.feedLblObj) this.feedLblObj.setText(isDead ? 'Revive!' : 'Feed');
+
+    const dimAlpha = isDead ? 0.25 : 1;
+    if (this.petBtnObj)  this.petBtnObj.setAlpha(dimAlpha);
+    if (this.playBtnObj) this.playBtnObj.setAlpha(dimAlpha);
+    if (this.petLblObj)  this.petLblObj.setAlpha(dimAlpha);
+    if (this.playLblObj) this.playLblObj.setAlpha(dimAlpha);
+
+    this.menuVisible = true;
+    this.blocker.setVisible(true);
+    this.menuGroup.setVisible(true);
+
+    // Fade in only fully-visible objects (preserve dimmed alpha)
+    this.menuGroup.getChildren().forEach(obj => {
+      const targetAlpha = obj.alpha; // already set above
+      obj.setAlpha(0);
+      this.tweens.add({ targets: obj, alpha: targetAlpha, duration: 180 });
     });
   }
 
