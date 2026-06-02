@@ -278,14 +278,22 @@ export default class WorldScene extends Phaser.Scene {
     bg.fillRect(458, 374, 4, 652);
     bg.fillRect(1458, 374, 4, 652);
 
-    // ── LAKE ───────────────────────────────────────────────────────────────
+    // ── TRIVENI SANGAM RIVER (two-tone Ganga + Yamuna confluence) ──────────
+    // Yamuna flows from west — slightly green-blue
+    bg.fillStyle(0x1a6b8a);
+    bg.fillEllipse(850, 700, 500, 390);
+    // Ganga flows from north-east — golden-silty
+    bg.fillStyle(0x1a6642);
+    bg.fillEllipse(1080, 695, 450, 380);
+    // Saraswati (mythical, underground) — deep blue centre
     bg.fillStyle(0x0d47a1);
     bg.fillEllipse(966, 706, 728, 408);
+    // Blended confluence core
     bg.fillStyle(0x1565c0);
     bg.fillEllipse(LAKE.cx, LAKE.cy, LAKE.rx * 2, LAKE.ry * 2);
     bg.fillStyle(0x1976d2);
     bg.fillEllipse(950, 695, 580, 320);
-    // Surface highlights
+    // Surface highlights (sunlight on sacred water)
     bg.fillStyle(0x42a5f5);
     bg.fillEllipse(870, 640, 220, 90);
     bg.fillEllipse(1080, 670, 140, 60);
@@ -299,19 +307,48 @@ export default class WorldScene extends Phaser.Scene {
      {x:780,y:680},{x:1100,y:660},{x:860,y:750},
      {x:1050,y:730},{x:960,y:600}].forEach(s => bg.fillRect(s.x, s.y, 3, 3));
 
-    // Shore-water transition line (subtle lighter ring just inside shore)
+    // Shore-water transition line
     bg.lineStyle(5, 0x64b5f6, 0.35);
     bg.strokeEllipse(LAKE.cx, LAKE.cy, LAKE.rx * 2 + 10, LAKE.ry * 2 + 10);
 
-    // Lily pads
-    bg.fillStyle(0x2e7d32);
-    [{x:690,y:670},{x:720,y:710},{x:740,y:740},
-     {x:1180,y:660},{x:1210,y:695},{x:1195,y:730},
-     {x:950,y:860},{x:985,y:845},{x:970,y:875}].forEach(p => {
-      bg.fillCircle(p.x, p.y, 10);
+    // ── SANGAM GHAT STEPS (south bank — stone steps descending into river) ──
+    // Ghats are the defining visual of Allahabad's riverfront
+    const ghatCX = 960;
+    const stoneColors = [0xd7ccc8, 0xbcaaa4, 0xa1887f, 0x8d6e63, 0x795548, 0x6d4c41];
+    for (let i = 0; i < 6; i++) {
+      const w = 200 + i * 52;           // each step wider toward water
+      const y = 858 + i * 13;
+      bg.fillStyle(stoneColors[i]);
+      bg.fillRect(ghatCX - w / 2, y, w, 13);
+      // Top shadow per step
+      bg.fillStyle(0x000000);
+      bg.fillRect(ghatCX - w / 2, y, w, 2);
+      // Subtle highlight
       bg.fillStyle(0xffffff);
-      bg.fillCircle(p.x + 1, p.y - 1, 3);
-      bg.fillStyle(0x2e7d32);
+      bg.fillRect(ghatCX - w / 2, y + 11, w, 1);
+    }
+    // Small lantern posts on ghat edges
+    bg.fillStyle(0x5d4037);
+    bg.fillRect(ghatCX - 106, 858, 4, 30);
+    bg.fillRect(ghatCX + 102, 858, 4, 30);
+    bg.fillStyle(0xffd54f);
+    bg.fillRect(ghatCX - 108, 853, 8, 8);
+    bg.fillRect(ghatCX + 100, 853, 8, 8);
+
+    // ── FLOATING MARIGOLD GARLANDS (genda phool — offered at Sangam) ───────
+    const garlands = [
+      {x:690,y:670},{x:718,y:712},{x:742,y:742},
+      {x:1180,y:662},{x:1208,y:697},{x:1194,y:732},
+      {x:950,y:862},{x:984,y:848},{x:968,y:876},
+    ];
+    garlands.forEach(p => {
+      // Marigold garland: orange ring with yellow centre
+      bg.fillStyle(0xff8f00);
+      bg.fillCircle(p.x, p.y, 11);
+      bg.fillStyle(0xffc107);
+      bg.fillCircle(p.x, p.y, 7);
+      bg.fillStyle(0xff6f00);
+      bg.fillCircle(p.x, p.y, 3);
     });
 
     // ── ANIMATED WATER SHIMMER ─────────────────────────────────────────────
@@ -328,6 +365,50 @@ export default class WorldScene extends Phaser.Scene {
         targets: s, alpha: 0.05,
         duration: 680 + i * 55, yoyo: true, repeat: -1,
         ease: 'Sine.easeInOut', delay: i * 145,
+      });
+    });
+
+    // ── ANIMATED FLOATING DIYAS (oil lamps — lit and floated on holy rivers) ─
+    const diyaPos = [
+      {x:800,y:645},{x:840,y:620},{x:910,y:608},{x:970,y:615},
+      {x:1030,y:625},{x:1095,y:638},{x:770,y:690},{x:830,y:705},
+      {x:1100,y:685},{x:1145,y:660},
+    ];
+    diyaPos.forEach((p, i) => {
+      const d = this.add.image(p.x, p.y, 'diya').setDepth(504).setAlpha(0.88);
+      // Gentle flicker
+      this.tweens.add({
+        targets: d, alpha: 0.55, scaleX: 0.85, scaleY: 0.85,
+        duration: 400 + i * 70, yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut', delay: i * 110,
+      });
+      // Slow drift
+      this.tweens.add({
+        targets: d, x: p.x + (i % 2 === 0 ? 6 : -6),
+        duration: 3000 + i * 400, yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut', delay: i * 200,
+      });
+    });
+
+    // ── DECORATIVE BOATS (nauka — used for Sangam darshan) ─────────────────
+    const boatPos = [
+      {x:810, y:660, flip: false},
+      {x:1130,y:670, flip: true},
+      {x:960, y:770, flip: false},
+    ];
+    boatPos.forEach((b, i) => {
+      const boat = this.add.image(b.x, b.y, 'boat').setFlipX(b.flip).setDepth(502);
+      // Gentle horizontal rock
+      this.tweens.add({
+        targets: boat, angle: b.flip ? 3 : -3,
+        duration: 2200 + i * 500, yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut', delay: i * 600,
+      });
+      // Gentle bob
+      this.tweens.add({
+        targets: boat, y: b.y + 3,
+        duration: 1800 + i * 300, yoyo: true, repeat: -1,
+        ease: 'Sine.easeInOut', delay: i * 400,
       });
     });
 
@@ -380,20 +461,32 @@ export default class WorldScene extends Phaser.Scene {
       {x:960,y:1210},{x:1070,y:1230},{x:1170,y:1205},{x:1275,y:1225},{x:1490,y:1230},
     ].forEach(f => this.add.image(f.x, f.y, 'flower').setDepth(f.y + 2));
 
+    // ── TEMPLE (Nagara shikhara — near Sangam, very common in Prayagraj) ────
+    // Place two temples: one prominent in park, one near north shore
+    this.add.image(1480, 330, 'temple').setDepth(330).setScale(1.6);
+    this.add.image(450,  310, 'temple').setDepth(310).setScale(1.2);
+
     // ── AREA LABELS ────────────────────────────────────────────────────────
-    this.add.text(960, 95, 'Central Park', {
-      fontSize: '36px', color: '#1b5e20',
+    this.add.text(960, 88, 'Alfred Park', {
+      fontSize: '38px', color: '#1b5e20',
       stroke: '#a5d6a7', strokeThickness: 5,
       fontFamily: 'Georgia, serif', fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(9998);
 
-    this.add.text(960, 138, 'New York City', {
-      fontSize: '18px', color: '#2e7d32',
+    this.add.text(960, 133, 'Prayagraj (Allahabad)', {
+      fontSize: '17px', color: '#2e7d32',
       fontFamily: 'Georgia, serif', fontStyle: 'italic',
     }).setOrigin(0.5).setDepth(9998);
 
-    // Shore interaction hint (world-space, near top of lake)
-    this.shoreHint = this.add.text(960, 472, 'tap the water to throw a stone', {
+    // Triveni Sangam label on the water
+    this.add.text(960, 700, '~ Triveni Sangam ~', {
+      fontSize: '14px', color: '#90caf9',
+      stroke: '#0d47a1', strokeThickness: 3,
+      fontFamily: 'Georgia, serif', fontStyle: 'italic',
+    }).setOrigin(0.5).setDepth(9997).setAlpha(0.75);
+
+    // Shore hint — Allahabad flavour
+    this.shoreHint = this.add.text(960, 472, 'offer a stone to the sacred river', {
       fontSize: '10px', color: '#b0bec5',
       stroke: '#000000', strokeThickness: 2,
       fontFamily: 'Arial, sans-serif',

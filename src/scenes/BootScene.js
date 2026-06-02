@@ -13,6 +13,9 @@ export default class BootScene extends Phaser.Scene {
     this.drawMoo('moo_eat',   false, true);
     this.makeReedTexture();
     this.makeShimmerTexture();
+    this.makeTempleTexture();
+    this.makeDiyaTexture();
+    this.makeBoatTexture();
   }
 
   makePlayerTexture() {
@@ -74,52 +77,68 @@ export default class BootScene extends Phaser.Scene {
   }
 
   makeTreeTexture() {
+    // Banyan / Peepal — sacred trees common across Prayagraj and Triveni Sangam.
+    // The Akshay Vat (immortal banyan) inside Allahabad Fort is a famous landmark.
     const g = this.make.graphics({ add: false });
 
-    // Trunk shadow
+    // Aerial roots (characteristic of banyan)
+    g.fillStyle(0x6d4c41);
+    g.fillRect(6,  26, 2, 14);
+    g.fillRect(12, 28, 2, 12);
+    g.fillRect(24, 28, 2, 12);
+    g.fillRect(30, 26, 2, 14);
+
+    // Main trunk (wide, gnarled)
     g.fillStyle(0x5d4037);
-    g.fillRect(11, 22, 8, 18);
-
-    // Trunk
+    g.fillRect(14, 22, 12, 22);
     g.fillStyle(0x795548);
-    g.fillRect(9, 20, 8, 18);
+    g.fillRect(12, 20, 14, 22);
 
-    // Leaves — layered for depth
+    // Wide canopy — banyan spreads very broadly
     g.fillStyle(0x1b5e20);
-    g.fillCircle(13, 18, 14);
+    g.fillEllipse(20, 18, 38, 24);
     g.fillStyle(0x2e7d32);
-    g.fillCircle(11, 14, 12);
+    g.fillEllipse(17, 13, 32, 20);
     g.fillStyle(0x388e3c);
-    g.fillCircle(15, 11, 10);
+    g.fillEllipse(22, 9,  26, 16);
     g.fillStyle(0x43a047);
-    g.fillCircle(13, 8, 7);
+    g.fillEllipse(19, 6,  18, 12);
     // Highlight
     g.fillStyle(0x66bb6a);
-    g.fillCircle(11, 6, 4);
+    g.fillEllipse(16, 4, 10, 7);
 
-    g.generateTexture('tree', 28, 38);
+    g.generateTexture('tree', 40, 42);
     g.destroy();
   }
 
   makeFlowerTexture() {
+    // Marigold (genda phool) — iconic in Allahabad puja culture
     const g = this.make.graphics({ add: false });
 
     // Stem
-    g.fillStyle(0x4caf50);
-    g.fillRect(4, 8, 2, 6);
+    g.fillStyle(0x558b2f);
+    g.fillRect(5, 11, 2, 7);
+    // Small leaf
+    g.fillStyle(0x689f38);
+    g.fillRect(6, 14, 5, 2);
 
-    // Petals (pink)
-    g.fillStyle(0xff80ab);
-    g.fillCircle(3, 5, 3);
-    g.fillCircle(7, 5, 3);
-    g.fillCircle(5, 3, 3);
-    g.fillCircle(5, 7, 3);
+    // Outer petals — deep saffron/orange
+    g.fillStyle(0xff8f00);
+    g.fillCircle(3, 6, 3); g.fillCircle(8, 6, 3);
+    g.fillCircle(5, 3, 3); g.fillCircle(5, 9, 3);
+    g.fillCircle(2, 4, 2); g.fillCircle(9, 4, 2);
+    g.fillCircle(2, 8, 2); g.fillCircle(9, 8, 2);
 
-    // Center (yellow)
-    g.fillStyle(0xffeb3b);
-    g.fillCircle(5, 5, 2);
+    // Inner petals — golden yellow
+    g.fillStyle(0xffc107);
+    g.fillCircle(4, 5, 2); g.fillCircle(7, 5, 2);
+    g.fillCircle(5, 4, 2); g.fillCircle(5, 8, 2);
 
-    g.generateTexture('flower', 10, 14);
+    // Centre
+    g.fillStyle(0xff6f00);
+    g.fillCircle(5, 6, 2);
+
+    g.generateTexture('flower', 12, 18);
     g.destroy();
   }
 
@@ -202,6 +221,108 @@ export default class BootScene extends Phaser.Scene {
     g.fillEllipse(7, 8, 10, 6);
 
     g.generateTexture('duck', 22, 14);
+    g.destroy();
+  }
+
+  makeTempleTexture() {
+    // North-Indian Nagara-style shikhara temple, common near Allahabad ghats
+    const g = this.make.graphics({ add: false });
+
+    // Saffron flag / kalash on top
+    g.fillStyle(0xff7043);
+    g.fillRect(10, 0, 2, 10);  // pole
+    g.fillStyle(0xff5722);
+    g.fillRect(11, 0, 8, 6);   // pennant
+
+    // Tapering shikhara
+    g.fillStyle(0xfff9c4);
+    g.fillRect(10, 9,  4,  3);
+    g.fillStyle(0xfff8e1);
+    g.fillRect(9,  11, 6,  3);
+    g.fillRect(8,  13, 8,  3);
+    g.fillRect(7,  15, 10, 3);
+    g.fillRect(6,  17, 12, 3);
+    g.fillRect(5,  19, 14, 4);
+
+    // Main mandap body
+    g.fillStyle(0xfff8e1);
+    g.fillRect(3,  22, 18, 13);
+
+    // Decorative pillars
+    g.fillStyle(0xf0c060);
+    g.fillRect(3,  22, 3, 13);
+    g.fillRect(18, 22, 3, 13);
+
+    // Base platform (jagati)
+    g.fillStyle(0xe8d5a3);
+    g.fillRect(1,  34, 22, 5);
+    g.fillRect(0,  38, 24, 4);
+
+    // Arched door
+    g.fillStyle(0xd4a017);
+    g.fillRect(9,  27, 6,  8);
+    g.fillStyle(0xffd54f);
+    g.fillCircle(12, 28, 3);  // arch curve
+
+    g.generateTexture('temple', 24, 42);
+    g.destroy();
+  }
+
+  makeDiyaTexture() {
+    // Clay oil lamp — floated on water during festivals at Sangam
+    const g = this.make.graphics({ add: false });
+
+    // Clay body
+    g.fillStyle(0xc1845c);
+    g.fillEllipse(5, 8, 10, 6);
+    g.fillStyle(0xa0522d);
+    g.fillRect(2, 9, 6, 3);
+
+    // Flame — outer orange
+    g.fillStyle(0xff9800);
+    g.fillEllipse(5, 5, 4, 7);
+    // Flame — inner yellow
+    g.fillStyle(0xffeb3b);
+    g.fillEllipse(5, 6, 2, 4);
+    // Tip
+    g.fillStyle(0xffffff);
+    g.fillRect(4, 3, 2, 1);
+
+    g.generateTexture('diya', 10, 13);
+    g.destroy();
+  }
+
+  makeBoatTexture() {
+    // Flat-bottomed nauka (rowboat) — used for Sangam darshan and river crossings
+    const g = this.make.graphics({ add: false });
+
+    // Hull sides
+    g.fillStyle(0x8b5e3c);
+    g.fillRect(2,  8, 34, 8);
+    // Keel / bottom
+    g.fillStyle(0x6d4c41);
+    g.fillRect(6, 14, 26, 4);
+    // Prow (bow shape)
+    g.fillStyle(0x8b5e3c);
+    g.fillRect(0, 10, 4, 4);
+    g.fillRect(34, 10, 4, 4);
+
+    // Oar left
+    g.fillStyle(0xb08060);
+    g.fillRect(-5, 11, 9, 2);
+    // Oar right
+    g.fillRect(34, 11, 9, 2);
+
+    // Boatman silhouette
+    g.fillStyle(0x37474f);
+    g.fillRect(14, 3, 4, 6);   // body
+    g.fillCircle(16, 2, 3);    // head
+    // Conical hat
+    g.fillStyle(0x5d4037);
+    g.fillRect(13, -1, 6, 3);
+    g.fillRect(14, -4, 4, 4);
+
+    g.generateTexture('boat', 43, 18);
     g.destroy();
   }
 
