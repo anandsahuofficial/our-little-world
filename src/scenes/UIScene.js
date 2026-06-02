@@ -99,7 +99,7 @@ export default class UIScene extends Phaser.Scene {
       rect.on('pointerout',  () => rect.setAlpha(1));
       rect.on('pointerdown', () => {
         const sfx = this.registry.get('sfx');
-        if (sfx) sfx.play('click');
+        if (sfx) { sfx.unlock(); sfx.play('click'); }
         this.game.events.emit('moo-action', { action: b.action });
         this.hideMenu();
       });

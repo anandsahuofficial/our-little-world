@@ -139,7 +139,11 @@ export default class WorldScene extends Phaser.Scene {
 
     // ── input ──────────────────────────────────────────────────────────────
     this.input.on('pointerdown', ptr => {
-      this.sfx.startAmbient(); // kick off ambient on first touch
+      // unlock() is idempotent — safe to call on every tap.
+      // Must be called synchronously inside a user-gesture handler so iOS
+      // AudioContext is created and unblocked before any sound is played.
+      this.sfx.unlock();
+
       const w = this.cameras.main.getWorldPoint(ptr.x, ptr.y);
 
       // 1. Near Moo → open care menu

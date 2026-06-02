@@ -1,4 +1,4 @@
-const CACHE = 'our-little-world-v3';
+const CACHE = 'our-little-world-v4';
 const ASSETS = [
   '.',
   'index.html',
